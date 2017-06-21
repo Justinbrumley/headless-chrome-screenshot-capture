@@ -24,10 +24,13 @@ module.exports = function(opts) {
     const chrome = await launchChrome();
     const protocol = await CDP({ port: chrome.port });
 
-    const { Page, Runtime } = protocol;
+    const { Page, Runtime, Emulation } = protocol;
     await Promise.all([ Page.enable(), Runtime.enable() ]);
 
     console.log('Opening url...', opts.url);
+    Emulation.setDefaultBackgroundColorOverride({
+      color: opts.backgroundColor || { r: 0, g: 0, b: 0, a: 0 },
+    });
     Page.navigate({ url: opts.url });
 
     await Page.loadEventFired();
