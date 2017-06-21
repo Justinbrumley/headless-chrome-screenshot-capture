@@ -7,28 +7,30 @@ async function launchChrome(headless = true) {
     flags: [
       '--window-size=412,732',
       '--disable-gpu',
-      headless ? '--headless' ? '',
+      headless ? '--headless' : ''
     ],
   });
 }
 
-const chrome = await launchChrome(true);
-const protocol = await CDP({ port: chrome.port });
+(async function() {
+  const chrome = await launchChrome(true);
+  const protocol = await CDP({ port: chrome.port });
 
-const { Page, Runtime } = protocol;
-await Promise.all([ Page.enable(), Runtime.enable() ]);
+  const { Page, Runtime } = protocol;
+  await Promise.all([ Page.enable(), Runtime.enable() ]);
 
-Page.navigate({ url: 'http://dev.sumo.com/apps/listbuilder/v3/template/06977c14-2f9c-41b9-831c-5b6992ca397f/phantom' });
+  Page.navigate({ url: 'http://dev.sumo.com/apps/listbuilder/v3/template/06977c14-2f9c-41b9-831c-5b6992ca397f/phantom' });
 
-Page.loadEventFired(async () => {
-  async function evaluate() {
-    const result = await Runtime.evaluate({ expressions: 'window.renderable' });
-    return result.result.value;
-  }
+  Page.loadEventFired(async () => {
+    async function evaluate() {
+      const result = await Runtime.evaluate({ expressions: 'window.renderable' });
+      return result.result.value;
+    }
 
-  const renderable = await evaluate('window.renderable');
+    const renderable = await evaluate('window.renderable');
 
-  console.log('Page renderable?', renderable);
-  protocol.close();
-  chrome.kill();
-});
+    console.log('Page renderable?', renderable);
+    protocol.close();
+    chrome.kill();
+  });
+})();
