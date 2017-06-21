@@ -1,26 +1,33 @@
 const chromeLauncher = require('lighthouse/chrome-launcher/chrome-launcher');
 const CDP = require('chrome-remote-interface');
 
-async function launchChrome(headless = true) {
-  return await chromeLauncher.launch({
-    port: 9222,
-    chromeFlags: [
-      '--window-size=412,732',
-      '--disable-gpu',
-      headless ? '--headless' : ''
-    ],
-  });
-}
+module.exports = async function(opts) {
+  if (!opts || !opts.url) {
+    throw Error('URL is required');
+  }
 
-(async function() {
-  const chrome = await launchChrome(true);
+  opts.retries = opts.retries || 5;
+  opts.retryTimeout = opts.retryTimeout || 2000;
+
+  async function launchChrome() {
+    return await chromeLauncher.launch({
+      port: opts.port || 9222,
+      chromeFlags: [
+        `--window-size=${opts.width || 640},${opts.height || 640}`,
+        '--disable-gpu',
+        '--headless'
+      ],
+    });
+  }
+
+  const chrome = await launchChrome();
   const protocol = await CDP({ port: chrome.port });
 
   const { Page, Runtime } = protocol;
   await Promise.all([ Page.enable(), Runtime.enable() ]);
 
-  console.log('Opening url...');
-  Page.navigate({ url: 'http://dev.sumo.com/apps/listbuilder/v3/template/06977c14-2f9c-41b9-831c-5b6992ca397f/phantom' });
+  console.log('Opening url...', opts.url);
+  Page.navigate({ url: opts.url });
 
   Page.loadEventFired(async () => {
     console.log('Load event fired...');
@@ -29,6 +36,12 @@ async function launchChrome(headless = true) {
       return result.result.value;
     }
 
+    function destroy() {
+      protocol.close();
+      chrome.kill();
+    }
+
+    let retries = 0;
     async function loop() {
       let renderable;
       try {
@@ -41,24 +54,24 @@ async function launchChrome(headless = true) {
 
       // Save screenshot if renderable is true or renderable isn't set
       if (renderable === undefined || renderable) {
-        let image;
-        try {
-          image = await Page.captureScreenshot();
-        } catch(e) {
-          console.log('Error capturing screenshot:', e);
+        Page.captureScreenshot().then((data) => {
+          console.log('Image Data:', data);
+          destroy();
+          return data;
+        });
+      } else {
+        retries++;
+        if (retries >= opts.retries) {
+          destroy();
+          throw Error(`Unable to parse page after ${opts.retries} retries`);
         }
 
-        console.log('Image:', image);
-
-        protocol.close();
-        chrome.kill();
-      } else {
         setTimeout(async () => {
           await loop();
-        }, 500);
+        }, opts.retryTimeout);
       }
     }
 
     await loop();
   });
-})();
+};
