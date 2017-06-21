@@ -1,0 +1,10 @@
+{
+  "name": "headless-chrome-render-stream",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Justin Brumley",
+  "license": "MIT",
+  "dependencies": {
+    "lighthouse": "^2.1.0"
+  }
+}
