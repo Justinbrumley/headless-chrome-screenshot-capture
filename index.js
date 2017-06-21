@@ -30,7 +30,6 @@ module.exports = async function(opts) {
   Page.navigate({ url: opts.url });
 
   Page.loadEventFired(async () => {
-    console.log('Load event fired...');
     async function evaluate() {
       const result = await Runtime.evaluate({ expression: 'window.renderable' });
       return result.result.value;
@@ -47,15 +46,12 @@ module.exports = async function(opts) {
       try {
         renderable = await evaluate('window.renderable');
       } catch(e) {
-        console.log('Error checking renderable value:', e);
+        throw Error('Error checking renderable value:', e);
       }
-
-      console.log('Renderable:', renderable);
 
       // Save screenshot if renderable is true or renderable isn't set
       if (renderable === undefined || renderable) {
         Page.captureScreenshot().then((data) => {
-          console.log('Image Data:', data);
           destroy();
           return data;
         });
