@@ -65,8 +65,7 @@ module.exports = function(opts, callback) {
           if (renderable === undefined || renderable) {
             Page.captureScreenshot().then((data) => {
               destroy();
-              console.log('Data:', data);
-              return data;
+              return data ? data.data : null;
             });
           } else {
             retries++;
