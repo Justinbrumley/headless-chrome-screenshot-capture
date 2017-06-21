@@ -1,6 +1,6 @@
 {
-  "name": "headless-chrome-render-stream",
-  "version": "1.0.0",
+  "name": "headless-chrome-screenshot-capture",
+  "version": "0.0.1",
   "main": "index.js",
   "author": "Justin Brumley",
   "license": "MIT",
