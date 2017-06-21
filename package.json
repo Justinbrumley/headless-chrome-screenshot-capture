@@ -5,6 +5,7 @@
   "author": "Justin Brumley",
   "license": "MIT",
   "dependencies": {
+    "async": "^2.4.1",
     "chrome-remote-interface": "^0.23.2",
     "lighthouse": "^2.1.0"
   }
